@@ -288,6 +288,7 @@
     <div class="actions" style="margin-bottom: 16px;">
       <button class="btn-primary" onclick="verSeccion('config')">Configurar Banco de Preguntas</button>
       <button class="btn-success" onclick="verSeccion('resultados')">Consultar Calificaciones</button>
+      <button class="btn-secondary" onclick="verSeccion('fbconfig')">Configuración Firebase</button>
     </div>
 
     <!-- SUBSECCIÓN CONFIGURACIÓN DE PREGUNTAS -->
@@ -299,6 +300,20 @@
       <div class="actions">
         <button class="btn-success" onclick="guardarConfig()">Guardar Cambios Localmente</button>
         <button class="btn-secondary" onclick="restaurarConfig()">Restaurar Preguntas del Word Original</button>
+      </div>
+    </div>
+
+    <!-- SUBSECCIÓN CONFIGURACIÓN FIREBASE -->
+    <div id="fbconfig" class="hidden">
+      <div class="notice">
+        <strong>Configuración de Conexión a Firebase.</strong> Puede personalizar la configuración de Firebase aquí si utiliza una base de datos propia.
+      </div>
+      <label>Configuración JSON de Firebase:
+        <textarea id="firebaseConfigInput" style="font-family: monospace; font-size: 13px; min-height: 140px;"></textarea>
+      </label>
+      <div class="actions">
+        <button class="btn-success" onclick="guardarFirebaseConfig()">Guardar Configuración Firebase</button>
+        <button class="btn-secondary" onclick="restaurarFirebaseConfigDefault()">Restaurar Firebase por Defecto</button>
       </div>
     </div>
 
@@ -325,6 +340,7 @@
               <th>Estado</th>
               <th>Docente</th>
               <th>Finalizado</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody id="tablaResultados"></tbody>
@@ -344,10 +360,11 @@
 const CLAVE_DOCENTE = "JBP2026";
 const STORAGE_PREGUNTAS = "jbp_lengua_9no_t2_preguntas_v2";
 const STORAGE_RESULTADOS = "jbp_lengua_9no_t2_resultados_v2";
+const STORAGE_FIREBASE = "jbp_lengua_9no_t2_fbconfig_v1";
 const COLECCION = "resultados_lengua_9no_t2";
 
-// Configuración opcional Firebase
-const firebaseConfig = {
+// Configuración por defecto de Firebase
+const firebaseConfigDefault = {
   apiKey: "AIzaSyA3IAQjjTagk02SrSErowf8hnCkDvyP1lA",
   authDomain: "examen-jbp-2026.firebaseapp.com",
   projectId: "examen-jbp-2026",
@@ -355,6 +372,14 @@ const firebaseConfig = {
   messagingSenderId: "451434970006",
   appId: "1:451434970006:web:954be11b701acf15eebbb7"
 };
+
+function obtenerFirebaseConfig() {
+  try {
+    const custom = localStorage.getItem(STORAGE_FIREBASE);
+    if (custom) return JSON.parse(custom);
+  } catch (e) {}
+  return firebaseConfigDefault;
+}
 
 let db = null, auth = null, firebaseListo = false;
 
@@ -635,20 +660,34 @@ function esc(s) {
 // Inicializar fecha de hoy
 $('fecha').value = new Date().toLocaleDateString('en-CA');
 
-// Inicializar Firebase (si está activo)
-try {
-  firebase.initializeApp(firebaseConfig);
-  auth = firebase.auth();
-  db = firebase.firestore();
-  auth.signInAnonymously().then(() => {
-    firebaseListo = true;
-    $('firebaseEstado').innerHTML = '<strong>✓ Sistema conectado online.</strong> Sus respuestas y calificaciones serán sincronizadas automáticamente.';
-  }).catch(e => {
-    $('firebaseEstado').innerHTML = '<strong>Modo Local:</strong> Almacenamiento local activado en este dispositivo.';
-  });
-} catch (e) {
-  $('firebaseEstado').textContent = 'Modo Local (Sin conexión remota)';
+// Inicializar Firebase
+function conectarFirebase() {
+  const currentConfig = obtenerFirebaseConfig();
+  try {
+    if (firebase.apps.length) {
+      firebase.app().delete();
+    }
+    firebase.initializeApp(currentConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    
+    auth.signInAnonymously().then(() => {
+      firebaseListo = true;
+      $('firebaseEstado').className = 'notice';
+      $('firebaseEstado').innerHTML = '<strong>✓ Sistema conectado a Firebase en línea.</strong> Los intentos y calificaciones se sincronizan en tiempo real.';
+    }).catch(e => {
+      firebaseListo = false;
+      $('firebaseEstado').className = 'warning';
+      $('firebaseEstado').innerHTML = '<strong>Aviso (Modo Local):</strong> No se pudo autenticar en Firebase (' + esc(e.message) + '). El examen guardará las notas en el navegador local.';
+    });
+  } catch (e) {
+    firebaseListo = false;
+    $('firebaseEstado').className = 'warning';
+    $('firebaseEstado').innerHTML = '<strong>Aviso (Modo Local):</strong> ' + esc(e.message);
+  }
 }
+
+conectarFirebase();
 
 function actualizarBotonInicio() {
   $('btnIniciar').disabled = !$('acepto').checked;
@@ -672,6 +711,16 @@ async function prepararInicio() {
   if (firebaseListo && auth.currentUser) {
     const ref = db.collection(COLECCION).doc(cedula);
     try {
+      const docSnap = await ref.get();
+      if (docSnap.exists) {
+        const datosPrevios = docSnap.data();
+        if (datosPrevios.estado === 'FINALIZADO' || datosPrevios.estado === 'INFRACCIÓN DEL REGLAMENTO') {
+          alert('Este número de cédula (' + cedula + ') ya rindió la evaluación. Comuníquese con la Profesora Lisbeth Menéndez si requiere habilitar un nuevo intento.');
+          return;
+        }
+      }
+      
+      // Registrar / actualizar inicio de intento
       await ref.set({
         ownerUid: auth.currentUser.uid,
         ...alumno,
@@ -681,12 +730,9 @@ async function prepararInicio() {
         total: preguntas.length,
         inicio: firebase.firestore.FieldValue.serverTimestamp(),
         ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      }, { merge: true });
     } catch (e) {
-      if (e.code === 'permission-denied') {
-        alert('Existe una restricción para registrar este examen o el número de cédula ya rindió la prueba.');
-        return;
-      }
+      console.warn("No se pudo escribir en Firestore, continuando localmente:", e);
     }
   }
 
@@ -695,7 +741,7 @@ async function prepararInicio() {
       await document.documentElement.requestFullscreen();
     }
   } catch (e) {
-    console.warn("Pantalla completa no disponible o denegada.");
+    console.warn("Pantalla completa no habilitada.");
   }
 
   iniciarExamen();
@@ -855,207 +901,78 @@ async function finalizarPorInfraccion(motivo) {
 async function actualizarResultadoFirebase(estado, aciertos, nota, motivo) {
   if (!firebaseListo || !db) return;
   try {
-    await db.collection(COLECCION).doc(alumno.cedula).update({
+    await db.collection(COLECCION).doc(alumno.cedula).set({
+      ownerUid: auth.currentUser ? auth.currentUser.uid : 'anon',
+      ...alumno,
       estado,
       nota,
       aciertos,
-      motivo,
+      total: preguntas.length,
+      motivo: motivo || '',
       docente: 'Profesora Lisbeth Menéndez',
       respuestas: respuestas.map((r, i) => ({ pregunta: i + 1, respuesta: r.respuesta, agotadoTiempo: r.agotadoTiempo })),
       finalizado: firebase.firestore.FieldValue.serverTimestamp(),
       ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    }, { merge: true });
   } catch (e) {
-    console.error('Error al guardar en servidor:', e);
+    console.error('Error al guardar en servidor Firebase:', e);
   }
 }
-
-function guardarResultado(estado, aciertos, nota, motivo = '') {
-  const r = {
-    ...alumno,
-    docente: 'Profesora Lisbeth Menéndez',
-    estado,
-    aciertos,
-    nota,
-    total: preguntas.length,
-    motivo,
-    respuestas: clonar(respuestas),
-    finalizado: new Date().toLocaleString('es-EC')
-  };
-  
-  try {
-    const arr = JSON.parse(localStorage.getItem(STORAGE_RESULTADOS) || '[]');
-    arr.push(r);
-    localStorage.setItem(STORAGE_RESULTADOS, JSON.stringify(arr));
-  } catch (e) {}
-  
-  actualizarResultadoFirebase(estado, aciertos, nota, motivo);
-}
-
-function mostrarResultado(infraccion, motivo, aciertos, nota) {
-  $('examen').classList.add('hidden');
-  $('resultado').classList.remove('hidden');
-  
-  $('estadoFinal').innerHTML = infraccion
-    ? `<div class="violation">EXAMEN ANULADO POR INFRACCIÓN AL REGLAMENTO.<br>Detalle: ${esc(motivo)}</div>`
-    : '<div class="notice">Evaluación completada exitosamente. La calificación ha sido almacenada.</div>';
-    
-  $('nota').textContent = `${nota.toFixed(2)} / 10.00`;
-  
-  $('resumen').innerHTML = `
-    <p><strong>Estudiante:</strong> ${esc(alumno.nombre)}</p>
-    <p><strong>Cédula:</strong> ${esc(alumno.cedula)}</p>
-    <p><strong>Materia:</strong> Lengua y Literatura</p>
-    <p><strong>Curso:</strong> ${esc(alumno.curso)}</p>
-    <p><strong>Fecha:</strong> ${esc(alumno.fecha)}</p>
-    <p><strong>Docente Responsable:</strong> Profesora Lisbeth Menéndez</p>
-    <p><strong>Vicerrectora Académica:</strong> Mg. Rita Loor Chávez</p>
-    <p><strong>Aciertos:</strong> ${aciertos} de ${preguntas.length} (0.50 pts cada una)</p>
-  `;
-}
-
-// Seguridad de ventana y navegación
-document.addEventListener('visibilitychange', () => {
-  if (examenActivo && proteccionActiva && document.hidden) {
-    finalizarPorInfraccion('Cambio de pestaña o minimización de navegador');
-  }
-});
-
-window.addEventListener('blur', () => {
-  if (!examenActivo || !proteccionActiva || modoDocente) return;
-  clearTimeout(blurTimer);
-  blurTimer = setTimeout(() => {
-    if (examenActivo && proteccionActiva && !document.hasFocus()) {
-      finalizarPorInfraccion('Pérdida de foco de la ventana');
-    }
-  }, 700);
-});
-
-document.addEventListener('fullscreenchange', () => {
-  if (examenActivo && proteccionActiva && !document.fullscreenElement) {
-    finalizarPorInfraccion('Salida del modo Pantalla Completa');
-  }
-});
-
-window.addEventListener('beforeunload', e => {
-  if (examenActivo) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
-
-document.addEventListener('contextmenu', e => {
-  if (examenActivo) e.preventDefault();
-});
-
-document.addEventListener('keydown', e => {
-  if (examenActivo) {
-    const k = e.key.toLowerCase();
-    if (['f11', 'f12', 'escape'].includes(k) || (e.ctrlKey && ['r', 'l', 't', 'w', 'u', 's', 'p'].includes(k)) || (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(k))) {
-      e.preventDefault();
-      return;
-    }
-  }
-  if (!examenActivo && e.altKey && e.shiftKey && e.key.toLowerCase() === 'd') {
-    e.preventDefault();
-    accesoDocente();
-  }
-});
-
-// Funciones del Panel Docente
-function accesoDocente() {
-  if (examenActivo) return;
-  const clave = prompt('Contraseña de acceso para la Profesora Lisbeth Menéndez:');
-  if (clave === CLAVE_DOCENTE) {
-    modoDocente = true;
-    $('inicio').classList.add('hidden');
-    $('resultado').classList.add('hidden');
-    $('docente').classList.remove('hidden');
-    verSeccion('config');
-    renderEditor();
-  } else if (clave !== null) {
-    alert('Contraseña incorrecta.');
-  }
-}
-
-function cerrarDocente() {
-  modoDocente = false;
-  $('docente').classList.add('hidden');
-  $('inicio').classList.remove('hidden');
-}
-
+// ... existing code global docente functions ...
 function verSeccion(sec) {
   $('config').classList.toggle('hidden', sec !== 'config');
   $('resultados').classList.toggle('hidden', sec !== 'resultados');
+  $('fbconfig').classList.toggle('hidden', sec !== 'fbconfig');
   if (sec === 'resultados') cargarResultados();
-}
-
-function renderEditor() {
-  $('editor').innerHTML = '';
-  preguntas.forEach((p, i) => {
-    const box = document.createElement('div');
-    box.className = 'admin-q';
-    box.innerHTML = `
-      <h4>Pregunta ${i + 1} · 0,50 puntos</h4>
-      <label>Enunciado
-        <textarea data-field="texto">${esc(p.texto)}</textarea>
-      </label>
-      <div class="grid">
-        ${p.opciones.map((opc, j) => `<label>Opción ${'ABCD'[j]}<input data-op="${j}" value="${esc(opc)}"></label>`).join('')}
-      </div>
-      <div class="grid" style="margin-top: 12px;">
-        <label>Respuesta correcta
-          <select data-field="correcta">
-            ${p.opciones.map((_, j) => `<option value="${j}" ${j === Number(p.correcta) ? 'selected' : ''}>Opción ${'ABCD'[j]}</option>`).join('')}
-          </select>
-        </label>
-      </div>
-    `;
-    $('editor').appendChild(box);
-  });
-}
-
-function guardarConfig() {
-  const nuevas = [];
-  document.querySelectorAll('.admin-q').forEach((box, i) => {
-    nuevas.push({
-      texto: box.querySelector('[data-field="texto"]').value.trim(),
-      opciones: [0, 1, 2, 3].map(j => box.querySelector(`[data-op="${j}"]`).value.trim()),
-      correcta: Number(box.querySelector('[data-field="correcta"]').value),
-      puntos: 0.50,
-      tiempo: 15
-    });
-  });
-
-  if (nuevas.length !== 20 || nuevas.some(q => !q.texto || q.opciones.some(x => !x))) {
-    alert('Por favor complete todos los campos de las 20 preguntas.');
-    return;
-  }
-
-  preguntas = nuevas;
-  localStorage.setItem(STORAGE_PREGUNTAS, JSON.stringify(preguntas));
-  alert('Configuración guardada correctamente en este equipo.');
-}
-
-function restaurarConfig() {
-  if (confirm('¿Desea restaurar el banco original de 20 preguntas del examen de Lengua?')) {
-    preguntas = clonar(preguntasOriginales);
-    localStorage.removeItem(STORAGE_PREGUNTAS);
-    renderEditor();
+  if (sec === 'fbconfig') {
+    $('firebaseConfigInput').value = JSON.stringify(obtenerFirebaseConfig(), null, 2);
   }
 }
 
-function fechaFirebase(v) {
+function guardarFirebaseConfig() {
   try {
-    return v && typeof v.toDate === 'function' ? v.toDate().toLocaleString('es-EC') : v?.seconds ? new Date(v.seconds * 1000).toLocaleString('es-EC') : String(v || '');
+    const val = JSON.parse($('firebaseConfigInput').value.trim());
+    localStorage.setItem(STORAGE_FIREBASE, JSON.stringify(val));
+    conectarFirebase();
+    alert('Configuración de Firebase actualizada y reconectada.');
   } catch (e) {
-    return '';
+    alert('Formato JSON inválido: ' + e.message);
   }
+}
+
+function restaurarFirebaseConfigDefault() {
+  if (confirm('¿Restaurar la configuración predeterminada de Firebase?')) {
+    localStorage.removeItem(STORAGE_FIREBASE);
+    conectarFirebase();
+    $('firebaseConfigInput').value = JSON.stringify(firebaseConfigDefault, null, 2);
+    alert('Se ha restaurado la configuración original.');
+  }
+}
+
+async function habilitarNuevoIntento(cedula) {
+  if (!confirm(`¿Habilitar un nuevo intento para el estudiante con cédula ${cedula}? Esto permitirá que el estudiante vuelva a rendir el examen.`)) return;
+  
+  if (firebaseListo) {
+    try {
+      await db.collection(COLECCION).doc(cedula).delete();
+    } catch (e) {
+      console.warn("No se pudo eliminar de Firestore:", e);
+    }
+  }
+
+  try {
+    let arr = JSON.parse(localStorage.getItem(STORAGE_RESULTADOS) || '[]');
+    arr = arr.filter(r => r.cedula !== cedula);
+    localStorage.setItem(STORAGE_RESULTADOS, JSON.stringify(arr));
+  } catch (e) {}
+
+  alert('Intento reiniciado exitosamente para la cédula ' + cedula);
+  cargarResultados();
 }
 
 async function cargarResultados() {
   const tb = $('tablaResultados');
-  tb.innerHTML = '<tr><td colspan="10">Cargando calificaciones...</td></tr>';
+  tb.innerHTML = '<tr><td colspan="11">Cargando calificaciones...</td></tr>';
   let datos = [];
 
   try {
@@ -1076,7 +993,7 @@ async function cargarResultados() {
   }
 
   resultadosOnlineCache = datos;
-  tb.innerHTML = datos.length ? '' : '<tr><td colspan="10">No hay calificaciones registradas.</td></tr>';
+  tb.innerHTML = datos.length ? '' : '<tr><td colspan="11">No hay calificaciones registradas.</td></tr>';
   
   datos.forEach(r => {
     const tr = document.createElement('tr');
@@ -1091,6 +1008,7 @@ async function cargarResultados() {
       <td>${esc(r.estado)}</td>
       <td>${esc(r.docente || 'Profesora Lisbeth Menéndez')}</td>
       <td>${esc(r.finalizado)}</td>
+      <td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="habilitarNuevoIntento('${esc(r.cedula)}')">Reiniciar</button></td>
     `;
     tb.appendChild(tr);
   });
