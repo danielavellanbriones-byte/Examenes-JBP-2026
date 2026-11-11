@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Examen de 2do Trimestre de Lengua y Literatura | 9no EGB JBP</title>
+  <title>Examen 2do Trimestre Lengua y Literatura | 9no EGB JBP</title>
   <style>
     :root {
       --vino: #6f1734;
@@ -32,7 +32,7 @@
       box-shadow: 0 3px 12px rgba(0, 0, 0, .18);
       text-align: center;
     }
-    header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 0.5px; }
+    header h1 { margin: 0; font-size: 23px; text-transform: uppercase; letter-spacing: 0.5px; }
     header p { margin: 6px 0 0; opacity: 0.95; }
     header .subtitle { font-weight: 700; letter-spacing: .03em; font-size: 16px; margin-top: 4px; }
     .container { max-width: 1050px; margin: 24px auto; padding: 0 16px; flex: 1; width: 100%; }
@@ -50,11 +50,12 @@
       width: 100%;
       padding: 11px 12px;
       border: 1px solid #cbd0d6;
-      border-radius: 9px;
+      border-radius: 99px;
       font-size: 15px;
       margin-top: 6px;
       background: white;
     }
+    input[type="text"], input[type="date"], select, textarea { border-radius: 9px; }
     textarea { min-height: 90px; resize: vertical; }
     button {
       border: 0;
@@ -116,7 +117,7 @@
       margin-bottom: 18px;
     }
     .student-strip strong { display: block; color: var(--vino); font-size: 11px; margin-bottom: 3px; }
-    .question { font-size: 20px; font-weight: 800; line-height: 1.45; margin-bottom: 16px; white-space: pre-line; }
+    .question { font-size: 19px; font-weight: 800; line-height: 1.45; margin-bottom: 16px; white-space: pre-line; }
     .option {
       display: block;
       border: 2px solid #e0e3e7;
@@ -162,9 +163,20 @@
     .teacher-access { margin-top: 12px; background: transparent; color: #666; border: 1px solid #ccc; }
     .section-sub { color: #667085; font-size: 14px; margin-top: 4px; }
     
+    /* MODAL DOCENTE */
+    .modal-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .modal-box {
+      background: white; padding: 24px; border-radius: 14px; max-width: 400px; width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    
     @media(max-width: 760px) {
       .grid, .student-strip { grid-template-columns: 1fr; }
-      header h1 { font-size: 20px; }
+      header h1 { font-size: 19px; }
     }
     @media print {
       header, .no-print { display: none !important; }
@@ -188,7 +200,7 @@
 <main class="container">
   <div id="firebaseEstado" class="notice" role="status">Cargando sistema de evaluación...</div>
 
-  <!-- REGISTRO DE DATOS DE ESTUDIANTE -->
+  <!-- INICIO / REGISTRO DEL ESTUDIANTE -->
   <section id="inicio" class="card">
     <h2 style="color: var(--vino); margin-top: 0;">Datos del Estudiante</h2>
     <p class="section-sub">Complete la información requerida para rendir la evaluación de Lengua y Literatura.</p>
@@ -227,7 +239,7 @@
       <ul>
         <li>Este examen contiene <strong>20 preguntas de opción múltiple</strong> y se califica sobre <strong>10.00 puntos</strong> (0.50 pts por respuesta correcta).</li>
         <li>Seleccione una sola opción (A, B, C o D) por cada pregunta antes de continuar.</li>
-        <li>Cada pregunta dispone de <strong>estrictamente 15 segundos</strong>. Transcurrido el tiempo, el sistema avanza automáticamente guardando la respuesta o dejándola nula si no fue respondida.</li>
+        <li>Cada pregunta dispone de <strong>estrictamente 15 segundos</strong>. Transcurrido el tiempo, el sistema avanza automáticamente guardando la respuesta seleccionada o dejándola nula.</li>
         <li>Está prohibido cambiar de pestaña, minimizar la ventana o salir de la pantalla completa. Cualquier intento registrará una infracción.</li>
         <li>Se permite un solo intento por número de cédula.</li>
         <li>Se recuerda que la deshonestidad académica es una falta grave sancionada por la institución.</li>
@@ -242,7 +254,7 @@
       <button id="btnIniciar" class="btn-primary" disabled onclick="prepararInicio()">Iniciar Examen de Lengua</button>
     </div>
     <p class="small" style="margin-top: 12px;">Al comenzar se solicitará pantalla completa. Se recomienda rendir el examen desde una computadora.</p>
-    <button class="teacher-access no-print" onclick="accesoDocente()" type="button">Acceso docente (Profesora Lisbeth Menéndez)</button>
+    <button class="teacher-access no-print" onclick="abrirModalDocente()" type="button">Acceso docente (Profesora Lisbeth Menéndez)</button>
   </section>
 
   <!-- PANTALLA DE EXAMEN -->
@@ -291,10 +303,10 @@
       <button class="btn-secondary" onclick="verSeccion('fbconfig')">Configuración Firebase</button>
     </div>
 
-    <!-- SUBSECCIÓN CONFIGURACIÓN DE PREGUNTAS -->
+    <!-- CONFIGURACIÓN DE PREGUNTAS -->
     <div id="config">
       <div class="notice">
-        <strong>Examen de Lengua y Literatura - 9no EGB.</strong> Posee 20 preguntas ponderadas con 0.50 pts cada una. Tiempo fijo de <strong>15 segundos por pregunta</strong>.
+        <strong>Examen de Lengua y Literatura - 9no EGB.</strong> 20 preguntas ponderadas a 0.50 pts c/u. Tiempo fijo de <strong>15 segundos por pregunta</strong>.
       </div>
       <div id="editor"></div>
       <div class="actions">
@@ -303,26 +315,26 @@
       </div>
     </div>
 
-    <!-- SUBSECCIÓN CONFIGURACIÓN FIREBASE -->
+    <!-- CONFIGURACIÓN FIREBASE -->
     <div id="fbconfig" class="hidden">
       <div class="notice">
-        <strong>Configuración de Conexión a Firebase.</strong> Puede personalizar la configuración de Firebase aquí si utiliza una base de datos propia.
+        <strong>Configuración de Firebase.</strong> Personalice las credenciales de Firebase en formato JSON si requiere usar un proyecto propio.
       </div>
       <label>Configuración JSON de Firebase:
         <textarea id="firebaseConfigInput" style="font-family: monospace; font-size: 13px; min-height: 140px;"></textarea>
       </label>
       <div class="actions">
-        <button class="btn-success" onclick="guardarFirebaseConfig()">Guardar Configuración Firebase</button>
-        <button class="btn-secondary" onclick="restaurarFirebaseConfigDefault()">Restaurar Firebase por Defecto</button>
+        <button class="btn-success" onclick="guardarFirebaseConfig()">Guardar Configuración</button>
+        <button class="btn-secondary" onclick="restaurarFirebaseConfigDefault()">Restaurar por Defecto</button>
       </div>
     </div>
 
-    <!-- SUBSECCIÓN TABLA DE RESULTADOS -->
+    <!-- CALIFICACIONES -->
     <div id="resultados" class="hidden">
       <div class="topbar">
         <h3 id="tituloResultados">Calificaciones de Lengua y Literatura</h3>
         <div class="actions">
-          <button class="btn-secondary" onclick="exportarCSV()">Exportar Reporte a CSV</button>
+          <button class="btn-secondary" onclick="exportarCSV()">Exportar a Excel (CSV)</button>
           <button class="btn-danger" onclick="borrarResultados()">Borrar Todos los Resultados</button>
         </div>
       </div>
@@ -350,20 +362,33 @@
   </section>
 </main>
 
+<!-- MODAL DOCENTE -->
+<div id="modalDocente" class="modal-bg hidden">
+  <div class="modal-box">
+    <h3 style="margin-top:0; color:var(--vino);">Acceso Docente</h3>
+    <p class="small">Ingrese la contraseña para acceder al panel de administración:</p>
+    <label>Contraseña:
+      <input type="password" id="claveInput" placeholder="Contraseña de acceso" onkeydown="if(event.key==='Enter') verificarClaveDocente()">
+    </label>
+    <div class="actions" style="margin-top: 15px; justify-content: flex-end;">
+      <button class="btn-secondary" onclick="cerrarModalDocente()">Cancelar</button>
+      <button class="btn-primary" onclick="verificarClaveDocente()">Ingresar</button>
+    </div>
+  </div>
+</div>
+
 <footer class="footer">
   Unidad Educativa Particular “Jacinto Burgos Pinargote” · Portoviejo - Manabí<br>
   Docente: Profesora Lisbeth Menéndez | Vicerrectora Académica: Mg. Rita Loor Chávez
 </footer>
 
 <script>
-// Clave por defecto para acceso administrativo docente
 const CLAVE_DOCENTE = "JBP2026";
-const STORAGE_PREGUNTAS = "jbp_lengua_9no_t2_preguntas_v2";
-const STORAGE_RESULTADOS = "jbp_lengua_9no_t2_resultados_v2";
-const STORAGE_FIREBASE = "jbp_lengua_9no_t2_fbconfig_v1";
+const STORAGE_PREGUNTAS = "jbp_lengua_9no_t2_preguntas_v3";
+const STORAGE_RESULTADOS = "jbp_lengua_9no_t2_resultados_v3";
+const STORAGE_FIREBASE = "jbp_lengua_9no_t2_fbconfig_v3";
 const COLECCION = "resultados_lengua_9no_t2";
 
-// Configuración por defecto de Firebase
 const firebaseConfigDefault = {
   apiKey: "AIzaSyA3IAQjjTagk02SrSErowf8hnCkDvyP1lA",
   authDomain: "examen-jbp-2026.firebaseapp.com",
@@ -383,7 +408,6 @@ function obtenerFirebaseConfig() {
 
 let db = null, auth = null, firebaseListo = false;
 
-// Banco oficial de 20 preguntas del Word de Lengua y Literatura (0.50 puntos c/u)
 const preguntasOriginales = [
   {
     "texto": "1. ¿Cuál es la principal finalidad de un texto argumentativo?",
@@ -393,9 +417,7 @@ const preguntasOriginales = [
       "Defender una opinión mediante razones y argumentos.",
       "Entretener al lector mediante situaciones ficticias."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "2. ¿Qué función cumple la tesis dentro de un texto argumentativo?",
@@ -405,9 +427,7 @@ const preguntasOriginales = [
       "Describir el contexto histórico del tema.",
       "Presentar una conclusión sin argumentos."
     ],
-    "correcta": 1,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 1, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "3. Lee el siguiente enunciado:\n«El uso excesivo del celular afecta el rendimiento académico porque disminuye la concentración de los estudiantes».\n¿Qué elemento argumentativo se evidencia principalmente?",
@@ -417,9 +437,7 @@ const preguntasOriginales = [
       "Un argumento.",
       "Un diálogo."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "4. ¿Cuál es la función de la conclusión en un texto argumentativo?",
@@ -429,9 +447,7 @@ const preguntasOriginales = [
       "Presentar nuevos personajes y situaciones.",
       "Cerrar el razonamiento reafirmando la postura defendida."
     ],
-    "correcta": 3,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 3, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "5. Un estudiante afirma:\n«Considero que la lectura debe fomentarse en los adolescentes, ya que mejora el vocabulario y desarrolla el pensamiento crítico».\n¿Qué elemento representa la expresión «Considero que la lectura debe fomentarse en los adolescentes»?",
@@ -441,9 +457,7 @@ const preguntasOriginales = [
       "La evidencia.",
       "El contraargumento."
     ],
-    "correcta": 0,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 0, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "6. Una obra literaria relata las aventuras de un personaje, presenta acontecimientos y desarrolla una secuencia de hechos. ¿A qué género pertenece?",
@@ -453,9 +467,7 @@ const preguntasOriginales = [
       "Narrativo.",
       "Didáctico."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "7. ¿Cuál de las siguientes características corresponde al género lírico?",
@@ -465,9 +477,7 @@ const preguntasOriginales = [
       "Desarrolla una historia mediante un narrador.",
       "Presenta conflictos representados por actores."
     ],
-    "correcta": 1,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 1, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "8. Una fábula que presenta animales con características humanas y termina con una enseñanza pertenece principalmente al género:",
@@ -477,9 +487,7 @@ const preguntasOriginales = [
       "Narrativo.",
       "Didáctico."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "9. ¿Qué característica permite identificar principalmente al género dramático?",
@@ -489,9 +497,7 @@ const preguntasOriginales = [
       "Presenta una enseñanza mediante consejos.",
       "Relata acontecimientos a través de un narrador."
     ],
-    "correcta": 0,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 0, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "10. Lee el siguiente fragmento:\n«El viento susurra entre los árboles, mientras mi corazón recuerda los momentos felices».\n¿Por qué este fragmento se relaciona con el género lírico?",
@@ -501,9 +507,7 @@ const preguntasOriginales = [
       "Porque relata una aventura con inicio y desenlace.",
       "Porque expresa sentimientos mediante un lenguaje poético."
     ],
-    "correcta": 3,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 3, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "11. En la oración «La profesora explicó la lección a sus estudiantes», ¿qué clasificación corresponde al sustantivo «profesora»?",
@@ -513,9 +517,7 @@ const preguntasOriginales = [
       "Colectivo, concreto y derivado.",
       "Común, abstracto y compuesto."
     ],
-    "correcta": 1,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 1, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "12. ¿Cuál de las siguientes opciones contiene únicamente sustantivos propios?",
@@ -525,9 +527,7 @@ const preguntasOriginales = [
       "Escuela, Portoviejo, montaña.",
       "María, profesora, cuaderno."
     ],
-    "correcta": 0,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 0, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "13. ¿Qué opción presenta correctamente un sustantivo abstracto?",
@@ -537,9 +537,7 @@ const preguntasOriginales = [
       "Honestidad.",
       "Escritorio."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "14. ¿Cuál es la diferencia entre un sustantivo individual y uno colectivo?",
@@ -549,9 +547,7 @@ const preguntasOriginales = [
       "El individual nombra una cualidad y el colectivo una acción.",
       "El individual nombra un solo ser y el colectivo, en singular, representa un conjunto."
     ],
-    "correcta": 3,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 3, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "15. En la expresión «El enjambre rodeó las flores», ¿qué clasificación tiene la palabra «enjambre»?",
@@ -561,9 +557,7 @@ const preguntasOriginales = [
       "Sustantivo abstracto.",
       "Sustantivo propio."
     ],
-    "correcta": 1,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 1, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "16. ¿Cuál de los siguientes grupos contiene únicamente sustantivos no contables?",
@@ -573,9 +567,7 @@ const preguntasOriginales = [
       "Arena, leche y aceite.",
       "Libro, silla y botella."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "17. ¿Qué opción contiene un sustantivo primitivo y su correspondiente derivado?",
@@ -585,9 +577,7 @@ const preguntasOriginales = [
       "Casa – edificio.",
       "Libro – biblioteca."
     ],
-    "correcta": 0,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 0, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "18. ¿Cuál de las siguientes palabras es un sustantivo derivado?",
@@ -597,9 +587,7 @@ const preguntasOriginales = [
       "Pan.",
       "Librería."
     ],
-    "correcta": 3,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 3, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "19. Identifica la opción que contiene únicamente sustantivos simples.",
@@ -609,9 +597,7 @@ const preguntasOriginales = [
       "Lavaplatos, automóvil y girasol.",
       "Ciempiés, medianoche y cumpleaños."
     ],
-    "correcta": 1,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 1, "puntos": 0.50, "tiempo": 15
   },
   {
     "texto": "20. En la oración «El limpiaparabrisas del automóvil estaba dañado», ¿qué clasificación corresponde a la palabra «limpiaparabrisas»?",
@@ -621,9 +607,7 @@ const preguntasOriginales = [
       "Sustantivo compuesto.",
       "Sustantivo abstracto."
     ],
-    "correcta": 2,
-    "puntos": 0.50,
-    "tiempo": 15
+    "correcta": 2, "puntos": 0.50, "tiempo": 15
   }
 ];
 
@@ -657,16 +641,12 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// Inicializar fecha de hoy
 $('fecha').value = new Date().toLocaleDateString('en-CA');
 
-// Inicializar Firebase
 function conectarFirebase() {
   const currentConfig = obtenerFirebaseConfig();
   try {
-    if (firebase.apps.length) {
-      firebase.app().delete();
-    }
+    if (firebase.apps.length) firebase.app().delete();
     firebase.initializeApp(currentConfig);
     auth = firebase.auth();
     db = firebase.firestore();
@@ -678,7 +658,7 @@ function conectarFirebase() {
     }).catch(e => {
       firebaseListo = false;
       $('firebaseEstado').className = 'warning';
-      $('firebaseEstado').innerHTML = '<strong>Aviso (Modo Local):</strong> No se pudo autenticar en Firebase (' + esc(e.message) + '). El examen guardará las notas en el navegador local.';
+      $('firebaseEstado').innerHTML = '<strong>Aviso (Modo Local):</strong> No se pudo conectar a Firebase (' + esc(e.message) + '). El examen guardará las notas localmente.';
     });
   } catch (e) {
     firebaseListo = false;
@@ -701,7 +681,7 @@ async function prepararInicio() {
   const fecha = $('fecha').value;
 
   if (!nombre || !/^\d{10}$/.test(cedula) || !curso || !fecha) {
-    alert('Por favor complete todos los datos: Nombres, Cédula válida de 10 dígitos, Curso y Fecha.');
+    alert('Por favor complete todos los datos: Nombres, Cédula de 10 dígitos, Curso y Fecha.');
     return;
   }
   if (!$('acepto').checked) return;
@@ -715,12 +695,11 @@ async function prepararInicio() {
       if (docSnap.exists) {
         const datosPrevios = docSnap.data();
         if (datosPrevios.estado === 'FINALIZADO' || datosPrevios.estado === 'INFRACCIÓN DEL REGLAMENTO') {
-          alert('Este número de cédula (' + cedula + ') ya rindió la evaluación. Comuníquese con la Profesora Lisbeth Menéndez si requiere habilitar un nuevo intento.');
+          alert('El número de cédula ' + cedula + ' ya rindió esta evaluación. Comuníquese con la Profesora Lisbeth Menéndez para habilitar un nuevo intento.');
           return;
         }
       }
       
-      // Registrar / actualizar inicio de intento
       await ref.set({
         ownerUid: auth.currentUser.uid,
         ...alumno,
@@ -732,7 +711,7 @@ async function prepararInicio() {
         ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
     } catch (e) {
-      console.warn("No se pudo escribir en Firestore, continuando localmente:", e);
+      console.warn("Firestore inaccesible, continuando en modo local:", e);
     }
   }
 
@@ -740,9 +719,7 @@ async function prepararInicio() {
     if (document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen();
     }
-  } catch (e) {
-    console.warn("Pantalla completa no habilitada.");
-  }
+  } catch (e) {}
 
   iniciarExamen();
 }
@@ -757,10 +734,7 @@ function iniciarExamen() {
   $('inicio').classList.add('hidden');
   $('examen').classList.remove('hidden');
   
-  setTimeout(() => {
-    if (examenActivo) proteccionActiva = true;
-  }, 1500);
-  
+  setTimeout(() => { if (examenActivo) proteccionActiva = true; }, 1500);
   mostrarPregunta();
 }
 
@@ -796,7 +770,6 @@ function mostrarPregunta() {
 
   $('btnSiguiente').textContent = (indice === preguntas.length - 1) ? 'Finalizar Examen' : 'Guardar respuesta y continuar';
   
-  // Asignar temporizador exacto de 15 segundos
   segundos = 15;
   pintarTimer();
   
@@ -819,7 +792,7 @@ function pintarTimer() {
 function siguiente() {
   const seleccionado = document.querySelector('input[name="respuesta"]:checked');
   if (!seleccionado) {
-    alert('Por favor, seleccione una opción antes de continuar.');
+    alert('Por favor, seleccione una respuesta antes de continuar.');
     return;
   }
   guardarRespuesta(false);
@@ -862,7 +835,7 @@ function calcularNota() {
   return { aciertos, nota: Math.min(10, Math.round((nota + Number.EPSILON) * 100) / 100) };
 }
 
-async function finalizarNormal() {
+function finalizarNormal() {
   if (finalizando) return;
   finalizando = true;
   examenActivo = false;
@@ -872,15 +845,13 @@ async function finalizarNormal() {
   completarNoRespondidas();
   const { aciertos, nota } = calcularNota();
   
-  guardarResultado('FINALIZADO', aciertos, nota);
   mostrarResultado(false, '', aciertos, nota);
+  guardarResultado('FINALIZADO', aciertos, nota);
   
-  try {
-    if (document.fullscreenElement) await document.exitFullscreen();
-  } catch (e) {}
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
 }
 
-async function finalizarPorInfraccion(motivo) {
+function finalizarPorInfraccion(motivo) {
   if (!examenActivo || finalizando || modoDocente) return;
   finalizando = true;
   examenActivo = false;
@@ -890,18 +861,33 @@ async function finalizarPorInfraccion(motivo) {
   completarNoRespondidas();
   const { aciertos, nota } = calcularNota();
   
-  guardarResultado('INFRACCIÓN DEL REGLAMENTO', aciertos, nota, motivo);
   mostrarResultado(true, motivo, aciertos, nota);
+  guardarResultado('INFRACCIÓN DEL REGLAMENTO', aciertos, nota, motivo);
   
-  try {
-    if (document.fullscreenElement) await document.exitFullscreen();
-  } catch (e) {}
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
 }
 
-async function actualizarResultadoFirebase(estado, aciertos, nota, motivo) {
-  if (!firebaseListo || !db) return;
+function guardarResultado(estado, aciertos, nota, motivo = '') {
+  const r = {
+    ...alumno,
+    docente: 'Profesora Lisbeth Menéndez',
+    estado,
+    aciertos,
+    nota,
+    total: preguntas.length,
+    motivo,
+    respuestas: clonar(respuestas),
+    finalizado: new Date().toLocaleString('es-EC')
+  };
+  
   try {
-    await db.collection(COLECCION).doc(alumno.cedula).set({
+    const arr = JSON.parse(localStorage.getItem(STORAGE_RESULTADOS) || '[]');
+    arr.push(r);
+    localStorage.setItem(STORAGE_RESULTADOS, JSON.stringify(arr));
+  } catch (e) {}
+
+  if (firebaseListo && db) {
+    db.collection(COLECCION).doc(alumno.cedula).set({
       ownerUid: auth.currentUser ? auth.currentUser.uid : 'anon',
       ...alumno,
       estado,
@@ -910,15 +896,112 @@ async function actualizarResultadoFirebase(estado, aciertos, nota, motivo) {
       total: preguntas.length,
       motivo: motivo || '',
       docente: 'Profesora Lisbeth Menéndez',
-      respuestas: respuestas.map((r, i) => ({ pregunta: i + 1, respuesta: r.respuesta, agotadoTiempo: r.agotadoTiempo })),
+      respuestas: respuestas.map((res, i) => ({ pregunta: i + 1, respuesta: res.respuesta, agotadoTiempo: res.agotadoTiempo })),
       finalizado: firebase.firestore.FieldValue.serverTimestamp(),
       ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  } catch (e) {
-    console.error('Error al guardar en servidor Firebase:', e);
+    }, { merge: true }).catch(err => console.error("Error guardando en Firebase:", err));
   }
 }
-// ... existing code global docente functions ...
+
+function mostrarResultado(infraccion, motivo, aciertos, nota) {
+  $('examen').classList.add('hidden');
+  $('resultado').classList.remove('hidden');
+  
+  $('estadoFinal').innerHTML = infraccion
+    ? `<div class="violation">EXAMEN FINALIZADO POR INFRACCIÓN DEL REGLAMENTO.<br>${esc(motivo)}</div>`
+    : '<div class="notice">Evaluación finalizada correctamente. Su nota ha sido procesada.</div>';
+    
+  $('nota').textContent = `${nota.toFixed(2)} / 10`;
+  $('resumen').innerHTML = `
+    <p><strong>Estudiante:</strong> ${esc(alumno.nombre)}</p>
+    <p><strong>Cédula:</strong> ${esc(alumno.cedula)}</p>
+    <p><strong>Materia:</strong> Lengua y Literatura</p>
+    <p><strong>Curso:</strong> ${esc(alumno.curso)}</p>
+    <p><strong>Fecha:</strong> ${esc(alumno.fecha)}</p>
+    <p><strong>Docente:</strong> Profesora Lisbeth Menéndez</p>
+    <p><strong>Aciertos:</strong> ${aciertos} de ${preguntas.length}</p>
+    <div class="notice">Cada respuesta correcta suma 0,50 puntos. Calificación sobre 10.00 puntos.</div>
+  `;
+}
+
+// CONTROL DE SEGURIDAD
+document.addEventListener('visibilitychange', () => {
+  if (examenActivo && proteccionActiva && document.hidden) {
+    finalizarPorInfraccion('Cambio de pestaña o ventana detectado');
+  }
+});
+
+window.addEventListener('blur', () => {
+  if (!examenActivo || !proteccionActiva || modoDocente) return;
+  clearTimeout(blurTimer);
+  blurTimer = setTimeout(() => {
+    if (examenActivo && proteccionActiva && !document.hasFocus()) {
+      finalizarPorInfraccion('La ventana del examen perdió el foco');
+    }
+  }, 700);
+});
+
+document.addEventListener('fullscreenchange', () => {
+  if (examenActivo && proteccionActiva && !document.fullscreenElement) {
+    finalizarPorInfraccion('Salida del modo pantalla completa');
+  }
+});
+
+window.addEventListener('beforeunload', e => {
+  if (examenActivo) { e.preventDefault(); e.returnValue = ''; }
+});
+
+document.addEventListener('contextmenu', e => {
+  if (examenActivo) e.preventDefault();
+});
+
+document.addEventListener('keydown', e => {
+  if (examenActivo) {
+    const k = e.key.toLowerCase();
+    if (['f11', 'f12', 'escape'].includes(k) || (e.ctrlKey && ['r', 'l', 't', 'w', 'u', 's', 'p'].includes(k)) || (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(k))) {
+      e.preventDefault();
+      return;
+    }
+  }
+  if (!examenActivo && e.altKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+    e.preventDefault();
+    abrirModalDocente();
+  }
+});
+
+// MODAL DOCENTE
+function abrirModalDocente() {
+  if (examenActivo) return;
+  $('claveInput').value = '';
+  $('modalDocente').classList.remove('hidden');
+  setTimeout(() => $('claveInput').focus(), 100);
+}
+
+function cerrarModalDocente() {
+  $('modalDocente').classList.add('hidden');
+}
+
+function verificarClaveDocente() {
+  const clave = $('claveInput').value.trim();
+  if (clave === CLAVE_DOCENTE || clave === "JBP 2026") {
+    cerrarModalDocente();
+    modoDocente = true;
+    $('inicio').classList.add('hidden');
+    $('resultado').classList.add('hidden');
+    $('docente').classList.remove('hidden');
+    verSeccion('config');
+    renderEditor();
+  } else {
+    alert('Contraseña incorrecta.');
+  }
+}
+
+function cerrarDocente() {
+  modoDocente = false;
+  $('docente').classList.add('hidden');
+  $('inicio').classList.remove('hidden');
+}
+
 function verSeccion(sec) {
   $('config').classList.toggle('hidden', sec !== 'config');
   $('resultados').classList.toggle('hidden', sec !== 'resultados');
@@ -929,12 +1012,67 @@ function verSeccion(sec) {
   }
 }
 
+function renderEditor() {
+  $('editor').innerHTML = '';
+  preguntas.forEach((p, i) => {
+    const box = document.createElement('div');
+    box.className = 'admin-q';
+    box.innerHTML = `
+      <h4>Pregunta ${i + 1} · 0,50 puntos</h4>
+      <label>Enunciado
+        <textarea data-field="texto">${esc(p.texto)}</textarea>
+      </label>
+      <div class="grid">
+        ${p.opciones.map((opc, j) => `<label>Opción ${'ABCD'[j]}<input data-op="${j}" value="${esc(opc)}"></label>`).join('')}
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <label>Respuesta Correcta
+          <select data-field="correcta">
+            ${p.opciones.map((_, j) => `<option value="${j}" ${j === Number(p.correcta) ? 'selected' : ''}>${'ABCD'[j]}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+    `;
+    $('editor').appendChild(box);
+  });
+}
+
+function guardarConfig() {
+  const nuevas = [];
+  document.querySelectorAll('.admin-q').forEach((box, i) => {
+    nuevas.push({
+      texto: box.querySelector('[data-field="texto"]').value.trim(),
+      opciones: [0, 1, 2, 3].map(j => box.querySelector(`[data-op="${j}"]`).value.trim()),
+      correcta: Number(box.querySelector('[data-field="correcta"]').value),
+      puntos: 0.50,
+      tiempo: 15
+    });
+  });
+
+  if (nuevas.length !== 20 || nuevas.some(q => !q.texto || q.opciones.some(x => !x))) {
+    alert('Por favor complete los enunciados y las 4 opciones de las 20 preguntas.');
+    return;
+  }
+
+  preguntas = nuevas;
+  localStorage.setItem(STORAGE_PREGUNTAS, JSON.stringify(preguntas));
+  alert('Configuración de preguntas guardada exitosamente.');
+}
+
+function restaurarConfig() {
+  if (confirm('¿Restaurar las 20 preguntas originales del documento Word de Lengua?')) {
+    preguntas = clonar(preguntasOriginales);
+    localStorage.removeItem(STORAGE_PREGUNTAS);
+    renderEditor();
+  }
+}
+
 function guardarFirebaseConfig() {
   try {
     const val = JSON.parse($('firebaseConfigInput').value.trim());
     localStorage.setItem(STORAGE_FIREBASE, JSON.stringify(val));
     conectarFirebase();
-    alert('Configuración de Firebase actualizada y reconectada.');
+    alert('Configuración de Firebase actualizada.');
   } catch (e) {
     alert('Formato JSON inválido: ' + e.message);
   }
@@ -949,15 +1087,17 @@ function restaurarFirebaseConfigDefault() {
   }
 }
 
+function fechaFirebase(v) {
+  try {
+    return v && typeof v.toDate === 'function' ? v.toDate().toLocaleString('es-EC') : (v?.seconds ? new Date(v.seconds * 1000).toLocaleString('es-EC') : String(v || ''));
+  } catch (e) { return ''; }
+}
+
 async function habilitarNuevoIntento(cedula) {
-  if (!confirm(`¿Habilitar un nuevo intento para el estudiante con cédula ${cedula}? Esto permitirá que el estudiante vuelva a rendir el examen.`)) return;
+  if (!confirm(`¿Habilitar un nuevo intento para el estudiante con cédula ${cedula}?`)) return;
   
   if (firebaseListo) {
-    try {
-      await db.collection(COLECCION).doc(cedula).delete();
-    } catch (e) {
-      console.warn("No se pudo eliminar de Firestore:", e);
-    }
+    try { await db.collection(COLECCION).doc(cedula).delete(); } catch (e) {}
   }
 
   try {
@@ -966,7 +1106,7 @@ async function habilitarNuevoIntento(cedula) {
     localStorage.setItem(STORAGE_RESULTADOS, JSON.stringify(arr));
   } catch (e) {}
 
-  alert('Intento reiniciado exitosamente para la cédula ' + cedula);
+  alert('Intento reiniciado para la cédula ' + cedula);
   cargarResultados();
 }
 
@@ -989,7 +1129,7 @@ async function cargarResultados() {
     $('tituloResultados').textContent = `Resultados en línea de Lengua y Literatura (${datos.length})`;
   } catch (e) {
     datos = JSON.parse(localStorage.getItem(STORAGE_RESULTADOS) || '[]');
-    $('tituloResultados').textContent = 'Resultados almacenados localmente';
+    $('tituloResultados').textContent = 'Resultados locales (sin conexión online)';
   }
 
   resultadosOnlineCache = datos;
@@ -1028,7 +1168,7 @@ async function borrarResultados() {
   
   localStorage.removeItem(STORAGE_RESULTADOS);
   await cargarResultados();
-  alert('Se han eliminado los resultados.');
+  alert('Resultados eliminados.');
 }
 
 async function exportarCSV() {
